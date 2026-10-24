@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-renamer"
+version = "2.0.0"
+description = "Rename files from their content using a local or cloud LLM"
+requires-python = ">=3.10"
+authors = [{ name = "Louai SF" }]
+dependencies = [
+    "httpx>=0.27",
+    "keyring>=25",
+    "pillow>=10",
+    "pillow-heif>=0.18",
+    "pymupdf>=1.24",
+    "python-docx>=1.0",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
+    "sv-ttk>=2.6",
+    "tkinterdnd2>=0.4",
+]
+
+[project.scripts]
+rename-ai = "ai_renamer.cli:main"
+
+[project.gui-scripts]
+rename-ai-gui = "ai_renamer.gui:main"
+
+[tool.setuptools.packages.find]
+include = ["ai_renamer*"]
+
+[tool.setuptools.package-data]
+ai_renamer = ["assets/*"]
