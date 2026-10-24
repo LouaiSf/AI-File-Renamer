@@ -1,225 +1,96 @@
-# AI File Renamer
+# AI Renamer
 
-An offline, modular document renaming system that automatically generates descriptive filenames based on document content.
+Renames files from what's inside them. `scan0001.pdf` becomes `2025-01 BNP Paribas Bank Statement Account 0042.pdf`, and `IMG_20250712_093112.jpg` becomes `2025-07-12 Air Algerie Boarding Pass Algiers to Paris AH1004.jpg`.
 
-## Features
+- Reads PDFs (including scanned ones), Word, Excel, PowerPoint, text and code files, and photos and screenshots.
+- Names are always in English. A date is added only when it matters (invoices, statements, tickets), never for recipes, manuals and the like.
+- Uses a **local model** (Ollama, private and free) or a **cloud API** (Gemini, OpenRouter, Groq, OpenAI, Claude…). You switch in the app.
+- Safe:
+  - You always see the new names before anything changes.
+  - Files are never overwritten.
+  - Every batch can be undone.
 
-- **Fully Offline**: No internet connection required
-- **Modular Design**: Swappable classification and naming modules
-- **Safe Renaming**: Automatic conflict resolution
-- **Comprehensive Logging**: Track all operations
-- **Multiple File Types**: Support for PDF, TXT, and DOCX
+## Using it
 
-## Supported File Types
+| Where | How |
+|---|---|
+| Desktop / Start menu | **AI Renamer** icon. Drop files or folders on the window. |
+| Explorer | Right-click files, a folder, or empty space in a folder → **Rename with AI**. On Windows 11 it's under *Show more options* (or Shift + right-click). |
+| Many files at once | Select them → right-click → **Send to → Rename with AI**. |
+| Terminal | `rename-ai <files or folders>` (see below). |
 
-- `.pdf` (text-based PDFs only)
-- `.txt` (UTF-8 and common encodings)
-- `.docx` (Microsoft Word documents)
+In the window:
+- New names appear as each file is analyzed.
+- Double-click a name to edit it. Click ☑ to include or exclude a file.
+- **Rename** applies the checked names.
+- Low-confidence names start unchecked so you can review them.
+- **History / Undo** reverts any past batch.
 
-## Installation
+## Settings (everything is editable, no code changes)
 
-### Prerequisites
+- **AI provider:**
+  - Switch providers, add any OpenAI-compatible service from presets, and set the model (with **Fetch list**).
+  - Paste API keys and run **Test connection**. Keys are stored in Windows Credential Manager.
+  - Set the requests-per-minute limit and how many files run at once.
+- **Local models:** install or start Ollama, see installed models with their sizes, check a model's size before downloading it, download or delete models.
+- **Naming:**
+  - Separator (space, `_` or `-`), capitalization and maximum length
+  - Where the date goes, or never add one
+  - Live preview
+- **Prompt:** the instructions sent to the AI. Edit freely; *Reset to default* restores them.
+- **Files:** subfolders, skipping already-renamed files, how much text and image detail is sent, and which file types are processed.
+- **Integration:** turn the right-click menu, Send To, desktop icon, Start menu entry and terminal command on or off.
 
-- Python 3.8 or higher
-- pip package manager
+### Getting a Gemini key (free)
+Settings → AI provider → *Google Gemini* → **Get a key** opens https://aistudio.google.com/apikey. Create a key, copy it, click **Paste**, then **Test connection** and **Use this provider**.
+The free tier is small (reportedly about 5 requests per minute and 20 per day for gemini-3.5-flash; check yours in AI Studio). The app spaces requests automatically. Google may use free-tier data to improve its products, so prefer the local model for private documents.
 
-### Setup
-
-1. Clone or download this repository
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure the system (optional):
-Edit `config.yaml` to customize:
-- Classifier type (rule-based, ML, LLM)
-- Filename templates
-- Logging preferences
-- File scanning options
-
-## Usage
-
-### Basic Usage
-
-Rename all supported files in a folder:
-
-```bash
-python main.py /path/to/folder
-```
-
-### Advanced Options
-
-Preview rename results without changing files:
-```bash
-python main.py /path/to/folder --preview
-```
-
-Enable verbose output:
-```bash
-python main.py /path/to/folder --verbose
-```
-
-Scan only the target folder (not subdirectories):
-```bash
-python main.py /path/to/folder --non-recursive
-```
-
-Use custom configuration:
-```bash
-python main.py /path/to/folder --config custom_config.yaml
-```
-
-## Configuration
-
-The system is configured via `config.yaml`. Key settings:
-
-### Classifier Configuration
-
-Choose classification method:
-- `rule_based`: Keyword matching (default, no dependencies)
-- `ml`: Machine learning classifier (requires training data)
-- `llm`: Local LLM (requires model download)
-- `zero_shot`: Transformer-based (requires transformers library)
-
-### Filename Templates
-
-Customize templates per document type:
-
-```yaml
-templates:
-  Invoice: "{vendor}_Invoice_{invoice_number}_{date}"
-  Contract: "Contract_{parties}_{date}"
-  default: "{doc_type}_{primary_entity}_{date}"
-```
-
-### Logging
-
-Configure log level, format, and destination:
-
-```yaml
-logging:
-  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
-  format: "json"  # json or text
-  log_file: "logs/file_renamer.log"
-```
-
-## Project Structure
+## Terminal
 
 ```
-ai-file-renamer/
-├ src/
-│   ├ core/              # Pipeline orchestration
-│   ├ extraction/        # Text extraction (PDF, TXT, DOCX)
-│   ├ cleaning/          # Text normalization
-│   ├ classification/    # Document classification (SWAPPABLE)
-│   ├ naming/            # Filename generation (SWAPPABLE)
-│   └ utils/             # Logging, config, file handling
-├ tests/                 # Unit and integration tests
-├ config/                # Configuration files
-├ logs/                  # Log files
-├ data/                  # Test data and samples
-├ main.py               # CLI entry point
-├ config.yaml           # Main configuration
-├ requirements.txt      # Python dependencies
-└ README.md
+rename-ai PATH [PATH ...]      preview, then asks before renaming
+  -p gemini                    use another provider for this run
+  -r                           include subfolders
+  -n                           dry run (only show names)
+  -y                           don't ask
+rename-ai undo [BATCH]         undo the last (or a given) batch
+rename-ai history              list past batches
+rename-ai providers | use ID   list / switch providers
+rename-ai set-key ID           store an API key (hidden input)
+rename-ai models [ID]          list models a provider offers
+rename-ai test [ID]            check a provider works
+rename-ai install | uninstall  add/remove Windows integration
 ```
 
-## How It Works
+## Data and files
 
-The system follows this pipeline for each file:
+Settings, history and the log are in `%APPDATA%\AIRenamer` (Settings → *Open data folder*). Local models are in `%USERPROFILE%\.ollama`.
 
-1. **File Detection**: Scan folder for supported files
-2. **Text Extraction**: Extract text content
-3. **Text Cleaning**: Normalize and clean text
-4. **Metadata Extraction**: Extract dates, entities, keywords
-5. **Classification**: Identify document type
-6. **Filename Generation**: Create descriptive filename
-7. **Safe Rename**: Rename with conflict resolution
-8. **Logging**: Record operation results
+Data use with a cloud provider:
+- Documents: only the first ~6,000 characters of text are sent.
+- Photos: shrunk to 1024 px first (about 150–300 KB each).
 
-## Extending the System
+## Development
 
-### Adding a Custom Classifier
-
-1. Create a new classifier class in `src/classification/`
-2. Inherit from `DocumentClassifier` base class
-3. Implement the `classify(text)` method
-4. Update `config.yaml` to use your classifier
-
-Example:
-```python
-from src.classification.base import DocumentClassifier
-
-class MyCustomClassifier(DocumentClassifier):
-    def classify(self, text: str) -> dict:
-        # Your classification logic
-        return {
-            'document_type': 'Invoice',
-            'confidence': 0.95
-        }
+```
+python -m venv .venv
+.venv\Scripts\pip install -e .
+.venv\Scripts\python -m unittest discover -s tests -t .
+.venv\Scripts\python tools\make_icon.py      # regenerate the icon
 ```
 
-### Adding a Custom Filename Generator
+Code layout (`ai_renamer/`):
 
-1. Create a new generator class in `src/naming/`
-2. Inherit from `FilenameGenerator` base class
-3. Implement the `generate()` method
-4. Update `config.yaml` to use your generator
+| Module | Role |
+|---|---|
+| `content.py` | file → text / images / hints |
+| `llm.py` | OpenAI-compatible client, prompt, reply parsing, rate limiting |
+| `naming.py` | suggestion → safe filename, conflict handling |
+| `engine.py` | scan → analyze → rename, shared by CLI and GUI |
+| `journal.py` | history and undo |
+| `ollama.py` | local runtime management |
+| `shell.py` | Windows integration and single-window handoff |
+| `gui.py`, `gui_settings.py` | the windows |
+| `cli.py` | the `rename-ai` command |
 
-## Testing
-
-Run tests:
-```bash
-python -m unittest discover tests
-```
-
-Run specific test module:
-```bash
-python -m unittest tests.test_extraction
-```
-
-## Error Handling
-
-The system handles various error scenarios:
-
-- **Corrupted files**: Logged and skipped
-- **Empty text extraction**: Logged and skipped
-- **Classification failures**: Falls back to "Unknown"
-- **Permission errors**: Logged and skipped
-
-Check `logs/file_renamer.log` for detailed error information.
-
-## Roadmap
-
-- [ ] Add support for scanned PDFs (OCR)
-- [ ] Implement ML-based classifier
-- [ ] Add LLM integration (Llama, Mistral)
-- [ ] Web interface for easier use
-- [ ] Undo/rollback functionality
-- [ ] Duplicate detection
-- [ ] Watch mode for automatic processing
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Contributing
-
-Contributions are welcome! Please ensure:
-- Code follows the modular architecture
-- New features include tests
-- Documentation is updated
-
-## Support
-
-For issues, questions, or feature requests, please open an issue on the project repository.
-
-## Author
-
-Your Name
-
-## Acknowledgments
-
-Built following offline-first and modular design principles for maximum flexibility and privacy.
+If you move this folder, run `rename-ai install` again from the new location (or use Settings → Integration).
